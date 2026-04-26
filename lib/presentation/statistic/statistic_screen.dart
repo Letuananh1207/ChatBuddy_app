@@ -5,6 +5,7 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/section_title.dart';
 import 'widgets/vocab_item.dart';
 import 'widgets/statistic_charts.dart';
+import 'widgets/pie_chart_section.dart';
 
 class StatisticScreen extends StatefulWidget {
   const StatisticScreen({super.key});
@@ -21,54 +22,107 @@ class _StatisticScreenState extends State<StatisticScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 8), // Khoảng cách nhẹ phía trên selector
             _buildModeSelector(),
             const SizedBox(height: 20),
-            _buildPieChartSection(),
+
+            // Biểu đồ tròn lỗi sai
+            PieChartSection(viewMode: viewMode),
             const SizedBox(height: 30),
+
+            // Biểu đồ tiến trình
             _buildProgressSection(),
-            const SizedBox(height: 30),
-            const SectionTitle(title: 'TỪ VỰNG ĐÃ LƯU'),
-            const SizedBox(height: 10),
-            const VocabItem(jp: "勉強", reading: "べんきょう"),
-            const VocabItem(jp: "食べる", reading: "たべる"),
-            const VocabItem(jp: "走る", reading: "はしる"),
+            const SizedBox(height: 25),
+
+            const SectionTitle(title: 'Từ vựng đã lưu'),
+            const SizedBox(height: 8),
+
+            // Nhóm các VocabItem vào một AppCard duy nhất
+            AppCard(
+              padding: EdgeInsets.zero, // Để các item chạm mép card
+              borderRadius: 20,
+              child: Column(
+                children: [
+                  const VocabItem(jp: "勉強", reading: "べんきょう"),
+                  _buildDivider(),
+                  const VocabItem(jp: "食べる", reading: "たべる"),
+                  _buildDivider(),
+                  const VocabItem(jp: "走る", reading: "はしる"),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
+  // Divider mờ để phân cách các từ vựng
+  Widget _buildDivider() {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      color: Colors.grey.shade50,
+      indent: 16,
+      endIndent: 16,
+    );
+  }
+
+  // Bộ chọn Mode dạng Mini Tab Pill với Icon + Text
   Widget _buildModeSelector() {
     return Center(
       child: Container(
-        padding: const EdgeInsets.all(4),
+        height: 36,
+        width: 140,
         decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: ToggleButtons(
+          color: Colors.grey.shade100,
           borderRadius: BorderRadius.circular(12),
-          isSelected: [viewMode == "day", viewMode == "month"],
-          onPressed: (index) =>
-              setState(() => viewMode = index == 0 ? "day" : "month"),
-          children: const [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12),
-              child: Text(
-                "NGÀY",
-                style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        child: Stack(
+          children: [
+            AnimatedAlign(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutBack,
+              alignment: viewMode == "day"
+                  ? Alignment.centerLeft
+                  : Alignment.centerRight,
+              child: Container(
+                width: 66,
+                height: 30,
+                margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.indigo.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12),
-              child: Text(
-                "THÁNG",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+            Row(
+              children: [
+                _buildModeButton(
+                  Icons.calendar_view_day_rounded,
+                  "D",
+                  viewMode == "day",
+                  () => setState(() => viewMode = "day"),
+                ),
+                _buildModeButton(
+                  Icons.calendar_month_rounded,
+                  "M",
+                  viewMode == "month",
+                  () => setState(() => viewMode = "month"),
+                ),
+              ],
             ),
           ],
         ),
@@ -76,46 +130,46 @@ class _StatisticScreenState extends State<StatisticScreen> {
     );
   }
 
-  Widget _buildPieChartSection() {
-    return AppCard(
-      child: Center(
-        child: SizedBox(
-          height: 180, // Giảm chiều cao tổng thể (từ 240 xuống 180)
-          child: Stack(
-            alignment: Alignment.center,
+  // Hàm build button hỗ trợ cả Icon và nhãn viết tắt
+  Widget _buildModeButton(
+    IconData icon,
+    String label,
+    bool isActive,
+    VoidCallback onTap,
+  ) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Center(
+          // Bọc Center ở ngoài cùng để căn giữa toàn bộ Row
+          child: Row(
+            mainAxisSize:
+                MainAxisSize.min, // Chỉ chiếm không gian vừa đủ để dễ căn giữa
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment
+                .center, // Căn giữa icon và text theo chiều dọc
             children: [
-              // Biểu đồ tròn thu nhỏ
-              PieChart(
-                PieChartData(
-                  sectionsSpace: 3,
-                  centerSpaceRadius: 50, // Thu nhỏ lòng trong (từ 65 xuống 50)
-                  sections: StatisticCharts.getSections(viewMode),
-                ),
+              Icon(
+                icon,
+                size: 14,
+                color: isActive ? AppColors.indigo : Colors.grey.shade400,
               ),
-
-              // Chữ hiển thị ở giữa thu nhỏ lại một chút cho cân đối
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    viewMode == "day" ? '28' : '120',
-                    style: const TextStyle(
-                      fontSize: 28, // Giảm từ 36 xuống 28
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.indigo,
-                      height: 1.0,
-                    ),
+              const SizedBox(width: 4),
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: 1,
+                ), // Thêm 1px padding top để bù trừ độ cao của font chữ nếu cần
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: isActive ? AppColors.indigo : Colors.grey.shade400,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                    height:
+                        1, // Ép line-height về 1 để không có khoảng trống thừa trên/dưới chữ
                   ),
-                  Text(
-                    'LỖI SAI',
-                    style: TextStyle(
-                      color: Colors.grey.shade500,
-                      fontSize: 9, // Giảm từ 10 xuống 9
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -129,10 +183,10 @@ class _StatisticScreenState extends State<StatisticScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SectionTitle(title: 'TIẾN TRÌNH'),
-          const SizedBox(height: 20),
+          const SectionTitle(title: 'Tiến trình'),
+          const SizedBox(height: 15),
           SizedBox(
-            height: 200,
+            height: 150,
             child: LineChart(StatisticCharts.getLineData(viewMode)),
           ),
         ],

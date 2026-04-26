@@ -29,16 +29,16 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Header chung cho toàn ứng dụng
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
+        centerTitle: false,
         title: const Text(
           'ChatBuddy JP',
           style: TextStyle(
             color: AppColors.indigo,
             fontWeight: FontWeight.bold,
-            fontSize: 22,
+            fontSize: 20,
           ),
         ),
         actions: [
@@ -50,32 +50,29 @@ class _MainScreenState extends State<MainScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Text('🐼', style: TextStyle(fontSize: 20)),
+                padding: EdgeInsets.all(6.0),
+                child: Text('🐼', style: TextStyle(fontSize: 18)),
               ),
             ),
           ),
         ],
       ),
 
-      // Giữ trạng thái tab bằng IndexedStack
       body: IndexedStack(index: _selectedIndex, children: _screens),
 
       bottomNavigationBar: Container(
+        // Loại bỏ padding dọc để giảm chiều cao tối đa
         decoration: BoxDecoration(
+          color: AppColors.background,
           border: Border(
             top: BorderSide(color: Colors.grey.shade100, width: 1),
           ),
         ),
         child: Theme(
           data: Theme.of(context).copyWith(
+            // Tắt hoàn toàn các hiệu ứng phản hồi mặc định để giao diện sạch hơn
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
-            hoverColor: Colors.transparent,
-            // overlayColor kiểm soát hiệu ứng nhấp nháy khi tap
-            navigationBarTheme: const NavigationBarThemeData(
-              overlayColor: WidgetStatePropertyAll(Colors.transparent),
-            ),
           ),
           child: BottomNavigationBar(
             currentIndex: _selectedIndex,
@@ -88,43 +85,31 @@ class _MainScreenState extends State<MainScreen> {
             backgroundColor: AppColors.background,
             selectedItemColor: AppColors.indigo,
             unselectedItemColor: Colors.grey.shade400,
-            enableFeedback: false, // tắt rung/âm thanh khi click
-            selectedLabelStyle: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 10,
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 10,
-            ),
+            elevation: 0,
+
+            // Bỏ hoàn toàn Label
+            showSelectedLabels: false,
+            showUnselectedLabels: false,
+
+            // Kích thước icon tiêu chuẩn, gọn gàng
+            iconSize: 24,
+
             items: const [
               BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4),
-                  child: Icon(Icons.bar_chart_rounded),
-                ),
-                label: 'SỐ LIỆU',
+                icon: Icon(Icons.insert_chart_rounded),
+                label: '',
               ),
               BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4),
-                  child: Icon(Icons.menu_book_rounded),
-                ),
-                label: 'HỌC TẬP',
+                icon: Icon(Icons.local_library_rounded),
+                label: '',
               ),
               BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4),
-                  child: Icon(Icons.settings_outlined),
-                ),
-                label: 'CÀI ĐẶT',
+                icon: Icon(Icons.settings_suggest_rounded),
+                label: '',
               ),
               BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4),
-                  child: Icon(Icons.person_outline_rounded),
-                ),
-                label: 'TÔI',
+                icon: Icon(Icons.account_circle_rounded),
+                label: '',
               ),
             ],
           ),
