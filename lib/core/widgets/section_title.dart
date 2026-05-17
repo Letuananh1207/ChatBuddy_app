@@ -3,7 +3,6 @@ import '../constants/colors.dart';
 
 class SectionTitle extends StatelessWidget {
   final String title;
-
   const SectionTitle({super.key, required this.title});
 
   @override
@@ -11,10 +10,10 @@ class SectionTitle extends StatelessWidget {
     return Text(
       title,
       style: const TextStyle(
-        color: AppColors.indigo,
+        fontSize: 14,
         fontWeight: FontWeight.bold,
-        fontSize: 12,
-        letterSpacing: 1.1,
+        color: AppColors.indigo,
+        letterSpacing: 1.0,
       ),
     );
   }

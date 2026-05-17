@@ -77,7 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Switch(
           value: value,
           onChanged: (val) {},
-          activeColor: AppColors.indigo,
+          activeThumbColor: AppColors.indigo,
           activeTrackColor: AppColors.indigo.withOpacity(0.1),
         ),
       ),

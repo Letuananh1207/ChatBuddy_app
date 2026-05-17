@@ -20,7 +20,7 @@ class AppTheme {
       bodyMedium: TextStyle(color: AppColors.darkText, fontSize: 14),
       bodySmall: TextStyle(color: AppColors.lightText, fontSize: 12),
     ),
-    cardTheme: CardThemeData(
+    cardTheme: const CardThemeData(
       color: AppColors.cardBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(16)),

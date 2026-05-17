@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-
-// Import các màn hình thực tế
 import 'statistic/statistic_screen.dart';
 import 'learning/learning_screen.dart';
 import 'settings/settings_screen.dart';
 import 'profile/profile_screen.dart';
-
-// Core
 import '../core/constants/colors.dart';
 
 class MainScreen extends StatefulWidget {
@@ -19,11 +15,13 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const StatisticScreen(),
+  static const _titles = ['Thống kê', 'Học tập', 'Cài đặt', 'Cá nhân'];
+
+  final List<Widget> _screens = const [
+    StatisticScreen(),
     LearningScreen(),
-    const SettingsScreen(),
-    const ProfileScreen(),
+    SettingsScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -32,88 +30,64 @@ class _MainScreenState extends State<MainScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        centerTitle: false,
-        title: const Text(
-          'ChatBuddy JP',
-          style: TextStyle(
-            color: AppColors.indigo,
+        scrolledUnderElevation: 0,
+        title: Text(
+          _titles[_selectedIndex],
+          style: const TextStyle(
+            color: AppColors.darkText,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.indigo.shade50,
-                shape: BoxShape.circle,
-              ),
-              child: const Padding(
-                padding: EdgeInsets.all(6.0),
-                child: Text('🐼', style: TextStyle(fontSize: 18)),
-              ),
+          IconButton(
+            tooltip: 'Thông báo',
+            icon: Icon(
+              Icons.notifications_outlined,
+              color: Colors.grey.shade700,
             ),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Chưa có thông báo mới'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
           ),
         ],
       ),
-
       body: IndexedStack(index: _selectedIndex, children: _screens),
-
-      bottomNavigationBar: Container(
-        // Loại bỏ padding dọc để giảm chiều cao tối đa
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          border: Border(
-            top: BorderSide(color: Colors.grey.shade100, width: 1),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: AppColors.indigo,
+        unselectedItemColor: Colors.grey,
+        selectedFontSize: 11,
+        unselectedFontSize: 11,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.analytics_outlined),
+            activeIcon: Icon(Icons.analytics),
+            label: 'Thống kê',
           ),
-        ),
-        child: Theme(
-          data: Theme.of(context).copyWith(
-            // Tắt hoàn toàn các hiệu ứng phản hồi mặc định để giao diện sạch hơn
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
+          BottomNavigationBarItem(
+            icon: Icon(Icons.book_outlined),
+            activeIcon: Icon(Icons.book),
+            label: 'Học tập',
           ),
-          child: BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            onTap: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: AppColors.background,
-            selectedItemColor: AppColors.indigo,
-            unselectedItemColor: Colors.grey.shade400,
-            elevation: 0,
-
-            // Bỏ hoàn toàn Label
-            showSelectedLabels: false,
-            showUnselectedLabels: false,
-
-            // Kích thước icon tiêu chuẩn, gọn gàng
-            iconSize: 24,
-
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.insert_chart_rounded),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.local_library_rounded),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.settings_suggest_rounded),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.account_circle_rounded),
-                label: '',
-              ),
-            ],
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
+            activeIcon: Icon(Icons.settings),
+            label: 'Cài đặt',
           ),
-        ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Cá nhân',
+          ),
+        ],
       ),
     );
   }
