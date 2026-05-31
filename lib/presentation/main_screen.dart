@@ -15,7 +15,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  static const _titles = ['Thống kê', 'Học tập', 'Cài đặt', 'Cá nhân'];
+  static const _titles = ['Trang chủ', 'Học tập', 'Cài đặt', 'Tài khoản'];
 
   final List<Widget> _screens = const [
     StatisticScreen(),
@@ -68,9 +68,9 @@ class _MainScreenState extends State<MainScreen> {
         unselectedFontSize: 11,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.analytics_outlined),
-            activeIcon: Icon(Icons.analytics),
-            label: 'Thống kê',
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Trang chủ',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.book_outlined),
@@ -85,7 +85,7 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
-            label: 'Cá nhân',
+            label: 'Tài khoản',
           ),
         ],
       ),

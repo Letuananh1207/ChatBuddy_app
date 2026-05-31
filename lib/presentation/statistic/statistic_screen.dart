@@ -1,5 +1,7 @@
 // lib/screens/statistic_screen.dart
 import 'package:flutter/material.dart';
+import '../../core/constants/colors.dart';
+import '../../core/widgets/section_title.dart';
 import './models/conversation_statistic.dart';
 import './widgets/expandable_message_card.dart';
 
@@ -12,6 +14,8 @@ class StatisticScreen extends StatefulWidget {
 
 class _StatisticScreenState extends State<StatisticScreen> {
   late List<ConversationStatistic> messages;
+  String selectedTab = 'unreviewed';
+  String? expandedCardId;
 
   @override
   void initState() {
@@ -75,29 +79,150 @@ class _StatisticScreenState extends State<StatisticScreen> {
   Widget build(BuildContext context) {
     final unreviewed = messages.where((m) => !m.isReviewed).toList();
     final reviewed = messages.where((m) => m.isReviewed).toList();
+    final currentItems = selectedTab == 'unreviewed' ? unreviewed : reviewed;
+    final emptyText = selectedTab == 'unreviewed'
+        ? 'Không có mục chưa xem'
+        : 'Không có mục đã xem';
+
+    final today = DateTime.now();
+    final formattedDate =
+        '${today.day.toString().padLeft(2, '0')}/${today.month.toString().padLeft(2, '0')}/${today.year}';
 
     return Scaffold(
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      backgroundColor: AppColors.background,
+      body: Column(
         children: [
-          if (unreviewed.isNotEmpty) ...[
-            Text('Chưa xem', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            ...unreviewed.map((msg) => ExpandableMessageCard(
-                  stat: msg,
-                  onReviewed: () => setState(() {}),
-                )),
-            const SizedBox(height: 16),
-          ],
-          if (reviewed.isNotEmpty) ...[
-            Text('Đã xem', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            ...reviewed.map((msg) => ExpandableMessageCard(
-                  stat: msg,
-                  onReviewed: () => setState(() {}),
-                )),
-          ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SectionTitle(title: 'REVIEW'),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Ngày $formattedDate',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey.shade600,
+                          ),
+                    ),
+                  ],
+                ),
+                _buildTabFilter(context, unreviewed.length, reviewed.length),
+              ],
+            ),
+          ),
+          Expanded(
+            child: currentItems.isEmpty
+                ? Center(
+                    child: Text(
+                      emptyText,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: Colors.grey[600]),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: currentItems.length,
+                    itemBuilder: (context, index) {
+                      final item = currentItems[index];
+                      return ExpandableMessageCard(
+                        stat: item,
+                        isExpanded: item.id == expandedCardId,
+                        onToggle: () => setState(() {
+                          expandedCardId = expandedCardId == item.id ? null : item.id;
+                        }),
+                        onReviewed: () => setState(() {}),
+                      );
+                    },
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
+                  ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTabFilter(
+      BuildContext context, int unreviewedCount, int reviewedCount) {
+    return Container(
+      height: 32,
+      width: 170,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Stack(
+        children: [
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            alignment: selectedTab == 'unreviewed'
+                ? Alignment.centerLeft
+                : Alignment.centerRight,
+            child: Container(
+              width: 82,
+              height: 28,
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              _buildFilterButton(
+                label: 'Chưa xem',
+                count: unreviewedCount,
+                isActive: selectedTab == 'unreviewed',
+                onTap: () => setState(() => selectedTab = 'unreviewed'),
+              ),
+              _buildFilterButton(
+                label: 'Đã xem',
+                count: reviewedCount,
+                isActive: selectedTab == 'reviewed',
+                onTap: () => setState(() => selectedTab = 'reviewed'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterButton({
+    required String label,
+    required int count,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Center(
+          child: Text(
+            '$label ($count)',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: isActive ? AppColors.indigo : Colors.grey.shade500,
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -2,22 +2,19 @@
 import 'package:flutter/material.dart';
 import '../models/conversation_statistic.dart';
 
-class ExpandableMessageCard extends StatefulWidget {
+class ExpandableMessageCard extends StatelessWidget {
   final ConversationStatistic stat;
-  final VoidCallback onReviewed; // callback để báo cho màn hình
+  final bool isExpanded;
+  final VoidCallback onToggle;
+  final VoidCallback onReviewed;
 
   const ExpandableMessageCard({
     super.key,
     required this.stat,
+    required this.isExpanded,
+    required this.onToggle,
     required this.onReviewed,
   });
-
-  @override
-  State<ExpandableMessageCard> createState() => _ExpandableMessageCardState();
-}
-
-class _ExpandableMessageCardState extends State<ExpandableMessageCard> {
-  bool _isExpanded = false;
 
   Color _getStatusColor(bool hasError) =>
       hasError ? Colors.orange : Colors.green;
@@ -39,14 +36,13 @@ class _ExpandableMessageCardState extends State<ExpandableMessageCard> {
 
   @override
   Widget build(BuildContext context) {
-    final stat = widget.stat;
     final mainTip = stat.improvements.isNotEmpty ? stat.improvements.first : '';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: stat.isReviewed ? Colors.grey[100] : null,
       child: InkWell(
-        onTap: () => setState(() => _isExpanded = !_isExpanded),
+        onTap: onToggle,
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -115,7 +111,7 @@ class _ExpandableMessageCardState extends State<ExpandableMessageCard> {
                     ),
                   ),
                 ),
-              if (_isExpanded) ...[
+              if (isExpanded) ...[
                 const SizedBox(height: 12),
                 Divider(color: Colors.grey[300], height: 1),
                 const SizedBox(height: 12),
@@ -135,18 +131,17 @@ class _ExpandableMessageCardState extends State<ExpandableMessageCard> {
                   _getStatusColor(stat.hasError),
                 ),
                 const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      setState(() {
+                if (!stat.isReviewed)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
                         stat.isReviewed = true;
-                      });
-                      widget.onReviewed();
-                    },
-                    child: const Text('Đánh dấu đã xem'),
+                        onReviewed();
+                      },
+                      child: const Text('Đánh dấu đã xem'),
+                    ),
                   ),
-                ),
               ],
             ],
           ),

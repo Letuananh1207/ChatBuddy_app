@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color background = Color(0xFFF9FAFB);
-  static const Color indigo = Color(0xFF6366F1);
+  static const Color background = Colors.white;
+  static const Color indigo = Color(0xFF6B7282);
 
   static const Color darkText = Color(0xFF1A1C43);
   static const Color lightText = Colors.grey;

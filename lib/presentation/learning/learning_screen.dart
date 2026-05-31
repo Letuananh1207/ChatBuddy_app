@@ -49,9 +49,8 @@ class _LearningScreenState extends State<LearningScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredLessons = lessons
-        .where((l) => l['type'] == viewMode)
-        .toList();
+    final filteredLessons =
+        lessons.where((l) => l['type'] == viewMode).toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -63,7 +62,7 @@ class _LearningScreenState extends State<LearningScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const SectionTitle(title: 'HỌC TỪ LỖI SAI'),
+                const SectionTitle(title: 'ĐỀ XUẤT CÁ NHÂN'),
                 LearningFilter(
                   viewMode: viewMode,
                   onModeChanged: (mode) => setState(() => viewMode = mode),

@@ -23,8 +23,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SectionTitle(title: 'CÀI ĐẶT'),
-            const SizedBox(height: 12),
             AppCard(
               borderRadius: 20,
               child: Column(
