@@ -39,9 +39,8 @@ Giải quyết vấn đề sau:
 - **Model**: `ConversationStatistic` với fields:
   - `userMessage` - Tin nhắn gốc
   - `correction` - Câu sửa (nếu có lỗi)
-  - `hasError` - Cờ lỗi
   - `improvements` - Danh sách gợi ý
-  - `timestamp` - Thời gian
+  - `isReviewed` - Đã xem hay chưa
 
 ### 3. **Auth Screen** (`lib/presentation/auth/`)
 
@@ -154,9 +153,9 @@ Người dùng học từ lỗi của mình
 ## 💡 Ghi Chú Quan Trọng
 
 1. **ConversationStatistic Model**:
-   - `hasError` = true → Chỉ show những câu có lỗi
    - `correction` = câu sửa (so sánh trực quan)
    - `improvements` = list gợi ý (emoji + text)
+   - `isReviewed` = người dùng đã xem bài này hay chưa
 
 2. **UI/UX**:
    - **Compact**: Gọn gàng, dễ scan

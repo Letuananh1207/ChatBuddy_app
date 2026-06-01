@@ -11,5 +11,6 @@ class AuthState with _$AuthState {
     @Default(false) bool isLoading,
     String? errorMessage,
     @Default(false) bool isAuthenticated,
+    @Default(false) bool isSessionRestored,
   }) = _AuthState;
 }

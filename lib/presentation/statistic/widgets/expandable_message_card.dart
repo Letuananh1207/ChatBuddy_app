@@ -16,23 +16,7 @@ class ExpandableMessageCard extends StatelessWidget {
     required this.onReviewed,
   });
 
-  Color _getStatusColor(bool hasError) =>
-      hasError ? Colors.orange : Colors.green;
-
-  String _formatDateTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}h';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d';
-    } else {
-      return '${dateTime.day}/${dateTime.month}';
-    }
-  }
+  Color _getStatusColor() => Colors.grey.shade500;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +39,7 @@ class ExpandableMessageCard extends StatelessWidget {
                     width: 10,
                     height: 10,
                     decoration: BoxDecoration(
-                      color: _getStatusColor(stat.hasError),
+                      color: _getStatusColor(),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -70,13 +54,6 @@ class ExpandableMessageCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _formatDateTime(stat.timestamp),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Colors.grey,
-                        ),
-                  ),
                 ],
               ),
               if (mainTip.isNotEmpty)
@@ -89,7 +66,7 @@ class ExpandableMessageCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              if (stat.hasError && stat.correction != null)
+              if (stat.correction != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Container(
@@ -98,16 +75,31 @@ class ExpandableMessageCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.orange[50],
+                      color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(
-                      stat.correction!,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Colors.orange[900],
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.arrow_forward,
+                          size: 16,
+                          color: Colors.grey.shade700,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            stat.correction!,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: Colors.grey.shade700,
+                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -115,12 +107,12 @@ class ExpandableMessageCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Divider(color: Colors.grey[300], height: 1),
                 const SizedBox(height: 12),
-                if (stat.hasError && stat.correction != null) ...[
+                if (stat.correction != null) ...[
                   _buildDetailSection(
                     context,
                     'Sửa:',
                     stat.correction!,
-                    Colors.orange,
+                    Colors.grey.shade700,
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -128,7 +120,7 @@ class ExpandableMessageCard extends StatelessWidget {
                   context,
                   'Gợi ý:',
                   stat.improvements.map((e) => '• $e').join('\n'),
-                  _getStatusColor(stat.hasError),
+                  _getStatusColor(),
                 ),
                 const SizedBox(height: 12),
                 if (!stat.isReviewed)
@@ -139,7 +131,17 @@ class ExpandableMessageCard extends StatelessWidget {
                         stat.isReviewed = true;
                         onReviewed();
                       },
-                      child: const Text('Đánh dấu đã xem'),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline,
+                            size: 16,
+                          ),
+                          SizedBox(width: 6),
+                          Text('Đã xem'),
+                        ],
+                      ),
                     ),
                   ),
               ],

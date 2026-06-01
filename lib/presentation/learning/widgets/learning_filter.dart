@@ -14,11 +14,11 @@ class LearningFilter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 28,
-      width: 130,
+      height: 32,
+      width: 170,
       decoration: BoxDecoration(
         color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Stack(
         children: [
@@ -29,12 +29,12 @@ class LearningFilter extends StatelessWidget {
                 ? Alignment.centerLeft
                 : Alignment.centerRight,
             child: Container(
-              width: 63,
-              height: 24,
+              width: 82,
+              height: 28,
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(13),
+                borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
@@ -65,7 +65,7 @@ class LearningFilter extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 9,
+              fontSize: 10,
               fontWeight: FontWeight.bold,
               color: isActive ? AppColors.indigo : Colors.grey.shade500,
             ),

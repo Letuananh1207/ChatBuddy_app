@@ -90,15 +90,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 child: Column(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(AppSizes.p12),
-                      decoration: BoxDecoration(
-                        color: AppColors.indigo.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.chat_bubble_outline_rounded,
-                        size: 36,
-                        color: AppColors.indigo,
+                      width: 96,
+                      height: 96,
+                      padding: const EdgeInsets.all(AppSizes.p16),
+                      child: Image.asset(
+                        'assets/logo.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
                     const SizedBox(height: AppSizes.p12),
@@ -125,7 +122,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: AppSizes.p40),
+              const SizedBox(height: AppSizes.p24),
               Container(
                 padding: const EdgeInsets.all(AppSizes.p20),
                 decoration: BoxDecoration(

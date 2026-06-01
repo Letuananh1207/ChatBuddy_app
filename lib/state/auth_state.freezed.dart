@@ -21,6 +21,7 @@ mixin _$AuthState {
   bool get isLoading => throw _privateConstructorUsedError;
   String? get errorMessage => throw _privateConstructorUsedError;
   bool get isAuthenticated => throw _privateConstructorUsedError;
+  bool get isSessionRestored => throw _privateConstructorUsedError;
 
   /// Create a copy of AuthState
   /// with the given fields replaced by the non-null parameter values.
@@ -39,7 +40,8 @@ abstract class $AuthStateCopyWith<$Res> {
       String? token,
       bool isLoading,
       String? errorMessage,
-      bool isAuthenticated});
+      bool isAuthenticated,
+      bool isSessionRestored});
 
   $UserModelCopyWith<$Res>? get user;
 }
@@ -64,6 +66,7 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
     Object? isLoading = null,
     Object? errorMessage = freezed,
     Object? isAuthenticated = null,
+    Object? isSessionRestored = null,
   }) {
     return _then(_value.copyWith(
       user: freezed == user
@@ -85,6 +88,10 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
       isAuthenticated: null == isAuthenticated
           ? _value.isAuthenticated
           : isAuthenticated // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isSessionRestored: null == isSessionRestored
+          ? _value.isSessionRestored
+          : isSessionRestored // ignore: cast_nullable_to_non_nullable
               as bool,
     ) as $Val);
   }
@@ -117,7 +124,8 @@ abstract class _$$AuthStateImplCopyWith<$Res>
       String? token,
       bool isLoading,
       String? errorMessage,
-      bool isAuthenticated});
+      bool isAuthenticated,
+      bool isSessionRestored});
 
   @override
   $UserModelCopyWith<$Res>? get user;
@@ -141,6 +149,7 @@ class __$$AuthStateImplCopyWithImpl<$Res>
     Object? isLoading = null,
     Object? errorMessage = freezed,
     Object? isAuthenticated = null,
+    Object? isSessionRestored = null,
   }) {
     return _then(_$AuthStateImpl(
       user: freezed == user
@@ -163,6 +172,10 @@ class __$$AuthStateImplCopyWithImpl<$Res>
           ? _value.isAuthenticated
           : isAuthenticated // ignore: cast_nullable_to_non_nullable
               as bool,
+      isSessionRestored: null == isSessionRestored
+          ? _value.isSessionRestored
+          : isSessionRestored // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -175,7 +188,8 @@ class _$AuthStateImpl implements _AuthState {
       this.token,
       this.isLoading = false,
       this.errorMessage,
-      this.isAuthenticated = false});
+      this.isAuthenticated = false,
+      this.isSessionRestored = false});
 
   @override
   final UserModel? user;
@@ -189,10 +203,13 @@ class _$AuthStateImpl implements _AuthState {
   @override
   @JsonKey()
   final bool isAuthenticated;
+  @override
+  @JsonKey()
+  final bool isSessionRestored;
 
   @override
   String toString() {
-    return 'AuthState(user: $user, token: $token, isLoading: $isLoading, errorMessage: $errorMessage, isAuthenticated: $isAuthenticated)';
+    return 'AuthState(user: $user, token: $token, isLoading: $isLoading, errorMessage: $errorMessage, isAuthenticated: $isAuthenticated, isSessionRestored: $isSessionRestored)';
   }
 
   @override
@@ -207,12 +224,14 @@ class _$AuthStateImpl implements _AuthState {
             (identical(other.errorMessage, errorMessage) ||
                 other.errorMessage == errorMessage) &&
             (identical(other.isAuthenticated, isAuthenticated) ||
-                other.isAuthenticated == isAuthenticated));
+                other.isAuthenticated == isAuthenticated) &&
+            (identical(other.isSessionRestored, isSessionRestored) ||
+                other.isSessionRestored == isSessionRestored));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, user, token, isLoading, errorMessage, isAuthenticated);
+  int get hashCode => Object.hash(runtimeType, user, token, isLoading,
+      errorMessage, isAuthenticated, isSessionRestored);
 
   /// Create a copy of AuthState
   /// with the given fields replaced by the non-null parameter values.
@@ -229,7 +248,8 @@ abstract class _AuthState implements AuthState {
       final String? token,
       final bool isLoading,
       final String? errorMessage,
-      final bool isAuthenticated}) = _$AuthStateImpl;
+      final bool isAuthenticated,
+      final bool isSessionRestored}) = _$AuthStateImpl;
 
   @override
   UserModel? get user;
@@ -241,6 +261,8 @@ abstract class _AuthState implements AuthState {
   String? get errorMessage;
   @override
   bool get isAuthenticated;
+  @override
+  bool get isSessionRestored;
 
   /// Create a copy of AuthState
   /// with the given fields replaced by the non-null parameter values.

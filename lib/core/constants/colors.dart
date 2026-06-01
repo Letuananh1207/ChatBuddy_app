@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color background = Colors.white;
+  static const Color background = Color(0xFFF3F4F6);
   static const Color indigo = Color(0xFF6B7282);
 
   static const Color darkText = Color(0xFF1A1C43);
-  static const Color lightText = Colors.grey;
+  static const Color lightText = Color(0xFF6B7282);
 
   static const Color cardBackground = Colors.white;
   static const Color cardBorder = Color(0xFFE5E7EB);

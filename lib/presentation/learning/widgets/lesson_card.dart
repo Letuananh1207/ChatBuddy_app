@@ -35,16 +35,17 @@ class LessonCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildErrorTag(item['errors']),
-                const SizedBox(height: 4),
                 Text(
                   item['title'],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: AppColors.darkText,
                   ),
                 ),
+                const SizedBox(height: 4),
                 Text(
                   item['desc'],
                   maxLines: 1,
@@ -60,24 +61,6 @@ class LessonCard extends StatelessWidget {
             size: 20,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildErrorTag(int errorCount) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF1F2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        '$errorCount LỖI SAI',
-        style: const TextStyle(
-          color: AppColors.error,
-          fontSize: 9,
-          fontWeight: FontWeight.w900,
-        ),
       ),
     );
   }

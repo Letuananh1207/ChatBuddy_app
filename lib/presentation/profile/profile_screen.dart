@@ -4,11 +4,21 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/constants/colors.dart';
 import '../../core/widgets/app_card.dart';
 import '../../state/auth_notifier.dart';
+import '../settings/widgets/language_setting_item.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
-  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+  @override
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  String _language = 'Tiếng Việt';
+  bool _notificationsEnabled = true;
+  bool _darkMode = false;
+
+  Future<void> _confirmLogout(BuildContext context) async {
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -30,7 +40,7 @@ class ProfileScreen extends ConsumerWidget {
             child: const Text(
               'Đăng xuất',
               style: TextStyle(
-                color: AppColors.error,
+                color: Colors.grey,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -45,60 +55,72 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final user = ref.watch(authProvider).user;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
         child: Column(
           children: [
             _buildUserInfoCard(
               username: user?.username ?? 'Học viên JP',
               email: user?.email,
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                _buildStatCard(
-                  '7 ngày',
-                  'STREAK',
-                  Icons.local_fire_department_rounded,
-                  Colors.orange,
-                ),
-                const SizedBox(width: 12),
-                _buildStatCard(
-                  '12.5 giờ',
-                  'ĐÃ XEM',
-                  Icons.play_circle_fill_rounded,
-                  AppColors.indigo,
-                ),
-              ],
+            const SizedBox(height: 12),
+
+            // Settings integrated into profile
+            AppCard(
+              borderRadius: 18,
+              child: Column(
+                children: [
+                  _buildSwitchItem(
+                    Icons.notifications_none_rounded,
+                    'Thông báo',
+                    _notificationsEnabled,
+                    (val) => setState(() => _notificationsEnabled = val),
+                  ),
+                  _buildDivider(),
+                  _buildSwitchItem(
+                    Icons.dark_mode_outlined,
+                    'Chế độ tối',
+                    _darkMode,
+                    (val) => setState(() => _darkMode = val),
+                  ),
+                  _buildDivider(),
+                  LanguageSettingItem(
+                    currentLanguage: _language,
+                    onTap: () => _showLanguagePicker(context),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
-            _buildLogoutButton(context, ref),
+
             const SizedBox(height: 16),
+            _buildLogoutButton(context),
+            const SizedBox(height: 12),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context, WidgetRef ref) {
+  Widget _buildLogoutButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: () => _confirmLogout(context, ref),
+        onPressed: () => _confirmLogout(context),
         icon: const Icon(Icons.logout_rounded, size: 20),
         label: const Text(
           'Đăng xuất',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
         ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.error,
-          side: BorderSide(color: AppColors.error.withOpacity(0.4)),
-          padding: const EdgeInsets.symmetric(vertical: AppSizes.p14),
+          backgroundColor: Colors.grey.shade300,
+          foregroundColor: Colors.black,
+          side: BorderSide(color: Colors.grey.shade300),
+          padding: const EdgeInsets.symmetric(vertical: AppSizes.p12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.r16),
           ),
@@ -112,21 +134,10 @@ class ProfileScreen extends ConsumerWidget {
     String? email,
   }) {
     return AppCard(
-      padding: const EdgeInsets.all(16),
-      borderRadius: 20,
+      padding: const EdgeInsets.all(14),
+      borderRadius: 18,
       child: Row(
         children: [
-          Container(
-            height: 70,
-            width: 70,
-            decoration: BoxDecoration(
-              color: AppColors.indigo.withOpacity(0.05),
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: const Text('🐼', style: TextStyle(fontSize: 32)),
-          ),
-          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,7 +145,7 @@ class ProfileScreen extends ConsumerWidget {
                 Text(
                   username,
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: FontWeight.bold,
                     color: AppColors.darkText,
                   ),
@@ -149,77 +160,83 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.indigo.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'N3 LEVEL',
-                    style: TextStyle(
-                      color: AppColors.indigo,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 10,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
-          Icon(Icons.edit_note_rounded, color: Colors.grey.shade400, size: 22),
+          Icon(Icons.edit_note_rounded, color: Colors.grey.shade400, size: 20),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(
-    String value,
-    String label,
-    IconData icon,
-    Color color,
-  ) {
-    return Expanded(
-      child: AppCard(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        borderRadius: 16,
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 10),
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: AppColors.darkText,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Colors.grey.shade500,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+  Widget _buildDivider() =>
+      Divider(height: 1, color: Colors.grey.shade50, indent: 14, endIndent: 14);
+
+  Widget _buildSwitchItem(
+      IconData icon, String title, bool value, ValueChanged<bool> onChanged) {
+    return ListTile(
+      visualDensity: const VisualDensity(vertical: -3),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      leading: Icon(icon, size: 20, color: AppColors.darkText.withOpacity(0.7)),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkText,
+          fontSize: 14,
         ),
       ),
+      trailing: Transform.scale(
+        scale: 0.8,
+        child: Switch(
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: AppColors.indigo,
+          activeTrackColor: AppColors.indigo.withOpacity(0.1),
+        ),
+      ),
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildLanguageOption("Tiếng Việt"),
+              _buildLanguageOption("English"),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLanguageOption(String lang) {
+    bool isSelected = _language == lang;
+    return ListTile(
+      title: Text(
+        lang,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? AppColors.indigo : AppColors.darkText,
+        ),
+      ),
+      onTap: () {
+        setState(() => _language = lang);
+        Navigator.pop(context);
+      },
     );
   }
 }

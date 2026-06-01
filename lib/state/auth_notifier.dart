@@ -17,13 +17,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> _restoreSession() async {
     final session = await _authRepository.loadSession();
-    if (session == null) return;
+    if (session != null) {
+      state = state.copyWith(
+        token: session.token,
+        user: session.user,
+        isAuthenticated: true,
+      );
+    }
 
-    state = state.copyWith(
-      token: session.token,
-      user: session.user,
-      isAuthenticated: true,
-    );
+    state = state.copyWith(isSessionRestored: true);
   }
 
   Future<void> login(String email, String password) async {
@@ -95,6 +97,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     await _authRepository.logout();
-    state = const AuthState();
+    state = const AuthState(isSessionRestored: true);
   }
 }

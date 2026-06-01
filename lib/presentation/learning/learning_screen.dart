@@ -49,8 +49,13 @@ class _LearningScreenState extends State<LearningScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredLessons =
-        lessons.where((l) => l['type'] == viewMode).toList();
+    final currentLessons = lessons.where((l) => l['type'] == viewMode).toList();
+
+    final today = DateTime.now();
+    final formattedDate =
+        '${today.day.toString().padLeft(2, '0')}/${today.month.toString().padLeft(2, '0')}/${today.year}';
+    final formattedMonth =
+        '${today.month.toString().padLeft(2, '0')}/${today.year}';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -58,30 +63,65 @@ class _LearningScreenState extends State<LearningScreen> {
         children: [
           // Header với Title và Filter
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const SectionTitle(title: 'ĐỀ XUẤT CÁ NHÂN'),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SectionTitle(title: 'LESSONS FOR YOU'),
+                      const SizedBox(height: 4),
+                      Text(
+                        viewMode == 'day'
+                            ? 'Ngày $formattedDate'
+                            : 'Tháng $formattedMonth',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey.shade600,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
                 LearningFilter(
                   viewMode: viewMode,
-                  onModeChanged: (mode) => setState(() => viewMode = mode),
+                  onModeChanged: (mode) {
+                    setState(() {
+                      viewMode = mode;
+                    });
+                  },
                 ),
               ],
             ),
           ),
-          // List content
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: filteredLessons.length,
-              itemBuilder: (context, index) {
-                return LessonCard(item: filteredLessons[index]);
-              },
-            ),
+            child: currentLessons.isEmpty
+                ? Center(
+                    child: Text(
+                      'Không có bài học cho chế độ này.',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: Colors.grey[600]),
+                    ),
+                  )
+                : _buildLessonList(currentLessons),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLessonList(List<Map<String, dynamic>> lessons) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(24),
+      itemCount: lessons.length,
+      itemBuilder: (context, index) {
+        return LessonCard(item: lessons[index]);
+      },
     );
   }
 }
