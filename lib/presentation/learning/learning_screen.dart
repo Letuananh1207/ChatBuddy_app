@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/constants/colors.dart';
 import '../../core/widgets/section_title.dart';
+import 'providers/recommended_lessons_provider.dart';
 import 'widgets/lesson_card.dart';
 import 'widgets/learning_filter.dart';
 
-class LearningScreen extends StatefulWidget {
+class LearningScreen extends ConsumerStatefulWidget {
   const LearningScreen({super.key});
 
   @override
-  State<LearningScreen> createState() => _LearningScreenState();
+  ConsumerState<LearningScreen> createState() => _LearningScreenState();
 }
 
-class _LearningScreenState extends State<LearningScreen> {
+class _LearningScreenState extends ConsumerState<LearningScreen> {
   String viewMode = "day";
 
   final List<Map<String, dynamic>> lessons = [
@@ -47,16 +50,27 @@ class _LearningScreenState extends State<LearningScreen> {
     },
   ];
 
+  Future<void> _refreshRecommendedLessons(String requestDateKey) async {
+    try {
+      await ref.refresh(recommendedLessonsProvider(requestDateKey).future);
+    } catch (_) {
+      // Ignore refresh errors; UI will show current error state.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final currentLessons = lessons.where((l) => l['type'] == viewMode).toList();
-
     final vietnamNow = DateTime.now().toUtc().add(const Duration(hours: 7));
-    final yesterday = vietnamNow.subtract(const Duration(days: 1));
     final formattedDate =
-        '${yesterday.day.toString().padLeft(2, '0')}/${yesterday.month.toString().padLeft(2, '0')}/${yesterday.year}';
+        '${vietnamNow.day.toString().padLeft(2, '0')}/${vietnamNow.month.toString().padLeft(2, '0')}/${vietnamNow.year}';
     final formattedMonth =
-        '${yesterday.month.toString().padLeft(2, '0')}/${yesterday.year}';
+        '${vietnamNow.month.toString().padLeft(2, '0')}/${vietnamNow.year}';
+    final requestDateKey =
+        '${vietnamNow.year}-${vietnamNow.month.toString().padLeft(2, '0')}-${vietnamNow.day.toString().padLeft(2, '0')}';
+
+    final recommendedLessonsAsync =
+        ref.watch(recommendedLessonsProvider(requestDateKey));
+    final monthLessons = lessons.where((l) => l['type'] == viewMode).toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -99,17 +113,77 @@ class _LearningScreenState extends State<LearningScreen> {
             ),
           ),
           Expanded(
-            child: currentLessons.isEmpty
-                ? Center(
-                    child: Text(
-                      'Không có bài học cho chế độ này.',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: Colors.grey[600]),
+            child: viewMode == 'day'
+                ? RefreshIndicator(
+                    onRefresh: () => _refreshRecommendedLessons(requestDateKey),
+                    child: recommendedLessonsAsync.when(
+                      data: (links) {
+                        if (links.isEmpty) {
+                          return ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            children: [
+                              Center(
+                                child: Text(
+                                  'Không có bài học đề xuất cho ngày này.',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(color: Colors.grey[600]),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+
+                        final linkItems = links
+                            .asMap()
+                            .entries
+                            .map(
+                              (entry) => {
+                                'title': 'Bài học ${entry.key + 1}',
+                                'desc': entry.value,
+                              },
+                            )
+                            .toList();
+                        return _buildLessonList(linkItems);
+                      },
+                      loading: () => ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: const [
+                          SizedBox(height: 24),
+                          Center(child: CircularProgressIndicator()),
+                        ],
+                      ),
+                      error: (error, stack) => ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        children: [
+                          Center(
+                            child: Text(
+                              'Không tải được bài học đề xuất. Hãy thử lại sau.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(color: Colors.grey[600]),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   )
-                : _buildLessonList(currentLessons),
+                : monthLessons.isEmpty
+                    ? Center(
+                        child: Text(
+                          'Không có bài học cho chế độ này.',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: Colors.grey[600]),
+                        ),
+                      )
+                    : _buildLessonList(monthLessons),
           ),
         ],
       ),

@@ -66,6 +66,47 @@ class StatisticRepository {
     }
   }
 
+  Future<List<String>> fetchRecommendedLessons(DateTime date) async {
+    try {
+      final dateStr =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final fullUrl =
+          '${_apiService.baseUrl}/api/message-day/$dateStr/recommended-lessons';
+      print('API Request URL: $fullUrl');
+
+      final response = await _apiService.get(
+        '/api/message-day/$dateStr/recommended-lessons',
+      );
+
+      print('API Response status: ${response.statusCode}');
+      print('API Response data: ${response.data}');
+
+      final body = response.data;
+      List<String> links = [];
+
+      if (body is Map) {
+        final dataField = body['data'];
+        if (dataField is Map && dataField['links'] is List) {
+          links = List<String>.from(dataField['links'] as List);
+        } else if (body['links'] is List) {
+          links = List<String>.from(body['links'] as List);
+        }
+      }
+
+      if (response.statusCode == 200) {
+        return links;
+      }
+
+      return [];
+    } on DioException catch (e) {
+      print('DioException: ${e.message}');
+      return [];
+    } catch (e) {
+      print('Error fetching recommended lessons: $e');
+      return [];
+    }
+  }
+
   ConversationStatistic _parseConversationStatistic(dynamic data) {
     return ConversationStatistic(
       id: data['id']?.toString() ?? '',
