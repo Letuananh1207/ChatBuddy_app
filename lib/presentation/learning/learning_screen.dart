@@ -51,11 +51,12 @@ class _LearningScreenState extends State<LearningScreen> {
   Widget build(BuildContext context) {
     final currentLessons = lessons.where((l) => l['type'] == viewMode).toList();
 
-    final today = DateTime.now();
+    final vietnamNow = DateTime.now().toUtc().add(const Duration(hours: 7));
+    final yesterday = vietnamNow.subtract(const Duration(days: 1));
     final formattedDate =
-        '${today.day.toString().padLeft(2, '0')}/${today.month.toString().padLeft(2, '0')}/${today.year}';
+        '${yesterday.day.toString().padLeft(2, '0')}/${yesterday.month.toString().padLeft(2, '0')}/${yesterday.year}';
     final formattedMonth =
-        '${today.month.toString().padLeft(2, '0')}/${today.year}';
+        '${yesterday.month.toString().padLeft(2, '0')}/${yesterday.year}';
 
     return Scaffold(
       backgroundColor: AppColors.background,

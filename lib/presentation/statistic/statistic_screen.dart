@@ -1,84 +1,29 @@
 // lib/screens/statistic_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/colors.dart';
 import '../../core/widgets/section_title.dart';
-import './models/conversation_statistic.dart';
 import './widgets/expandable_message_card.dart';
+import './providers/review_providers.dart';
 
-class StatisticScreen extends StatefulWidget {
+class StatisticScreen extends ConsumerStatefulWidget {
   const StatisticScreen({super.key});
 
   @override
-  State<StatisticScreen> createState() => _StatisticScreenState();
+  ConsumerState<StatisticScreen> createState() => _StatisticScreenState();
 }
 
-class _StatisticScreenState extends State<StatisticScreen> {
-  late List<ConversationStatistic> messages;
+class _StatisticScreenState extends ConsumerState<StatisticScreen> {
   String selectedTab = 'unreviewed';
   String? expandedCardId;
 
   @override
-  void initState() {
-    super.initState();
-    messages = _getFakeData();
-  }
-
-  List<ConversationStatistic> _getFakeData() {
-    return [
-      ConversationStatistic(
-        id: '2',
-        userMessage: 'きのうは映画を見ています',
-        correction: 'きのうは映画を見ました',
-        improvements: [
-          'Bạn dùng "～ています" nhưng "きのう" là quá khứ xác định',
-          'Dùng "～ました" để nói về hành động đã hoàn thành',
-          '～ています = đang làm / ～ました = đã làm xong',
-        ],
-      ),
-      ConversationStatistic(
-        id: '4',
-        userMessage: 'あなたは誰ですか',
-        correction: 'あなたはだれですか',
-        improvements: [
-          '"誰" thường viết là "だれ" (hiragana)',
-          'Cách viết chuẩn: あなたはだれですか',
-          'Có thể bỏ "あなた" để tự nhiên hơn',
-        ],
-      ),
-      ConversationStatistic(
-        id: '6',
-        userMessage: 'わたしが学校を行きました',
-        correction: 'わたしは学校に行きました',
-        improvements: [
-          '助詞 sai: "が" và "を"',
-          'Dùng "は" cho chủ ngữ, "に" cho nơi đến',
-          'Mẫu: ～は + 場所 + に + 行きました',
-        ],
-      ),
-      ConversationStatistic(
-        id: '7',
-        userMessage: 'これは私の本です',
-        correction: 'これはわたしの本です',
-        improvements: [
-          '"私" thường đọc là "わたし"',
-          'Viết tự nhiên hơn: これはわたしの本です',
-        ],
-      ),
-    ];
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final unreviewed = messages.where((m) => !m.isReviewed).toList();
-    final reviewed = messages.where((m) => m.isReviewed).toList();
-    final currentItems = selectedTab == 'unreviewed' ? unreviewed : reviewed;
-    final emptyText = selectedTab == 'unreviewed'
-        ? 'Yeah! Bạn đã làm rất tốt rồi'
-        : 'Bạn chưa xem phản hồi nào. Hãy xem lại để cải thiện nhé!';
-
-    final today = DateTime.now();
+    final reviewMessagesAsync = ref.watch(reviewMessagesProvider);
+    final vietnamNow = DateTime.now().toUtc().add(const Duration(hours: 7));
+    final yesterday = vietnamNow.subtract(const Duration(days: 1));
     final formattedDate =
-        '${today.day.toString().padLeft(2, '0')}/${today.month.toString().padLeft(2, '0')}/${today.year}';
+        '${yesterday.day.toString().padLeft(2, '0')}/${yesterday.month.toString().padLeft(2, '0')}/${yesterday.year}';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -102,33 +47,63 @@ class _StatisticScreenState extends State<StatisticScreen> {
                     ),
                   ],
                 ),
-                _buildTabFilter(context, unreviewed.length, reviewed.length),
+                reviewMessagesAsync.whenData((messages) {
+                      final unreviewed =
+                          messages.where((m) => !m.isReviewed).toList();
+                      final reviewed =
+                          messages.where((m) => m.isReviewed).toList();
+                      return _buildTabFilter(
+                          context, unreviewed.length, reviewed.length);
+                    }).value ??
+                    SizedBox.shrink(),
               ],
             ),
           ),
           Expanded(
-            child: currentItems.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            emptyText,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                    color: Colors.grey[600], height: 1.5),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.refresh(reviewMessagesProvider);
+              },
+              child: reviewMessagesAsync.when(
+                data: (messages) {
+                  final unreviewed =
+                      messages.where((m) => !m.isReviewed).toList();
+                  final reviewed = messages.where((m) => m.isReviewed).toList();
+                  final currentItems =
+                      selectedTab == 'unreviewed' ? unreviewed : reviewed;
+                  final emptyText = selectedTab == 'unreviewed'
+                      ? 'Yeah! Bạn đã làm rất tốt rồi'
+                      : 'Bạn chưa xem phản hồi nào. Hãy xem lại để cải thiện nhé!';
+
+                  if (currentItems.isEmpty) {
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.6,
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 32),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  emptyText,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                          color: Colors.grey[600], height: 1.5),
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  )
-                : ListView.separated(
+                    );
+                  }
+                  return ListView.separated(
                     padding: const EdgeInsets.all(24),
                     itemCount: currentItems.length,
                     itemBuilder: (context, index) {
@@ -145,7 +120,45 @@ class _StatisticScreenState extends State<StatisticScreen> {
                     },
                     separatorBuilder: (context, index) =>
                         const SizedBox(height: 12),
+                  );
+                },
+                loading: () => SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
                   ),
+                ),
+                error: (error, stackTrace) => SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Có lỗi khi tải dữ liệu: $error',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                      color: Colors.red[600], height: 1.5),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
