@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
 import '../../core/constants/colors.dart';
+import 'arena_room_screen.dart';
 
 class ArenaScreen extends StatefulWidget {
   const ArenaScreen({super.key});
@@ -13,11 +13,22 @@ class _ArenaScreenState extends State<ArenaScreen> {
   final TextEditingController _createController = TextEditingController();
   final TextEditingController _joinController = TextEditingController();
 
+  // 🔹 Lưu lịch sử tham gia phòng
+  final List<Map<String, String>> _history = [];
+
   @override
   void dispose() {
     _createController.dispose();
     _joinController.dispose();
     super.dispose();
+  }
+
+  String _generateRoomCode() {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    return List.generate(
+        6,
+        (index) => letters[(DateTime.now().millisecondsSinceEpoch + index) %
+            letters.length]).join();
   }
 
   void _showCreateDialog() {
@@ -27,7 +38,11 @@ class _ArenaScreenState extends State<ArenaScreen> {
         title: const Text('Tạo phòng mới'),
         content: TextField(
           controller: _createController,
-          decoration: const InputDecoration(hintText: 'Tên phòng'),
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Tên phòng',
+            hintText: 'Nhập tên phòng',
+          ),
         ),
         actions: [
           TextButton(
@@ -46,10 +61,23 @@ class _ArenaScreenState extends State<ArenaScreen> {
                 );
                 return;
               }
+              final code = _generateRoomCode();
               _createController.clear();
               Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Đã tạo phòng: $name')),
+
+              // 🔹 Thêm vào lịch sử
+              setState(() {
+                _history.insert(0, {"name": name, "code": code});
+              });
+
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ArenaRoomScreen(
+                    roomName: name,
+                    roomCode: code,
+                    isHost: true,
+                  ),
+                ),
               );
             },
             child: const Text('Tạo'),
@@ -88,8 +116,20 @@ class _ArenaScreenState extends State<ArenaScreen> {
               }
               _joinController.clear();
               Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Yêu cầu tham gia: $code')),
+
+              // 🔹 Thêm vào lịch sử
+              setState(() {
+                _history.insert(0, {"name": code, "code": code});
+              });
+
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ArenaRoomScreen(
+                    roomName: code,
+                    roomCode: code,
+                    isHost: false,
+                  ),
+                ),
               );
             },
             child: const Text('Tham gia'),
@@ -109,7 +149,7 @@ class _ArenaScreenState extends State<ArenaScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Word Arena'.toUpperCase(),
+              'WORD ARENA',
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -118,7 +158,6 @@ class _ArenaScreenState extends State<ArenaScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
             Row(
               children: [
                 Expanded(
@@ -152,18 +191,35 @@ class _ArenaScreenState extends State<ArenaScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 24),
 
-            const SizedBox(height: 12),
-
-            // 🔹 Chú thích dưới 2 nút
-            Text(
-              'Bạn có thể tạo phòng mới để mời bạn bè, hoặc tham gia phòng có sẵn bằng mã phòng.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade600,
+            // 🔹 Lịch sử tham gia
+            if (_history.isNotEmpty) ...[
+              const Text(
+                'Lịch sử tham gia',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.darkText,
+                ),
               ),
-            ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _history.length,
+                  itemBuilder: (context, index) {
+                    final item = _history[index];
+                    return Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.history),
+                        title: Text(item["name"] ?? ""),
+                        subtitle: Text("Mã phòng: ${item["code"]}"),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ],
         ),
       ),
