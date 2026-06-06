@@ -55,7 +55,7 @@ class _StatisticScreenState extends ConsumerState<StatisticScreen> {
                       return _buildTabFilter(
                           context, unreviewed.length, reviewed.length);
                     }).value ??
-                    SizedBox.shrink(),
+                    const SizedBox.shrink(),
               ],
             ),
           ),

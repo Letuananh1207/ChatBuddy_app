@@ -30,29 +30,12 @@ class _LearningScreenState extends ConsumerState<LearningScreen> {
       'errors': 8,
       'type': 'day',
     },
-    {
-      'title': 'Thì Te',
-      'desc': 'Cách chia và sử dụng thể Te',
-      'errors': 5,
-      'type': 'month',
-    },
-    {
-      'title': 'Bị động',
-      'desc': 'Cấu trúc bị động N3',
-      'errors': 3,
-      'type': 'month',
-    },
-    {
-      'title': 'Kính ngữ',
-      'desc': 'Sử dụng Keigo',
-      'errors': 15,
-      'type': 'month',
-    },
   ];
 
   Future<void> _refreshRecommendedLessons(String requestDateKey) async {
     try {
-      await ref.refresh(recommendedLessonsProvider(requestDateKey).future);
+      final _ = ref.refresh(recommendedLessonsProvider(requestDateKey));
+      return;
     } catch (_) {
       // Ignore refresh errors; UI will show current error state.
     }
@@ -61,10 +44,13 @@ class _LearningScreenState extends ConsumerState<LearningScreen> {
   @override
   Widget build(BuildContext context) {
     final vietnamNow = DateTime.now().toUtc().add(const Duration(hours: 7));
+    final yesterday = vietnamNow.subtract(const Duration(days: 1));
+    final previousMonth = DateTime(vietnamNow.year, vietnamNow.month - 1);
+
     final formattedDate =
-        '${vietnamNow.day.toString().padLeft(2, '0')}/${vietnamNow.month.toString().padLeft(2, '0')}/${vietnamNow.year}';
+        '${yesterday.day.toString().padLeft(2, '0')}/${yesterday.month.toString().padLeft(2, '0')}/${yesterday.year}';
     final formattedMonth =
-        '${vietnamNow.month.toString().padLeft(2, '0')}/${vietnamNow.year}';
+        '${previousMonth.month.toString().padLeft(2, '0')}/${previousMonth.year}';
     final requestDateKey =
         '${vietnamNow.year}-${vietnamNow.month.toString().padLeft(2, '0')}-${vietnamNow.day.toString().padLeft(2, '0')}';
 
@@ -117,8 +103,8 @@ class _LearningScreenState extends ConsumerState<LearningScreen> {
                 ? RefreshIndicator(
                     onRefresh: () => _refreshRecommendedLessons(requestDateKey),
                     child: recommendedLessonsAsync.when(
-                      data: (links) {
-                        if (links.isEmpty) {
+                      data: (lessonsData) {
+                        if (lessonsData.isEmpty) {
                           return ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
                             padding: const EdgeInsets.symmetric(vertical: 24),
@@ -136,17 +122,7 @@ class _LearningScreenState extends ConsumerState<LearningScreen> {
                           );
                         }
 
-                        final linkItems = links
-                            .asMap()
-                            .entries
-                            .map(
-                              (entry) => {
-                                'title': 'Bài học ${entry.key + 1}',
-                                'desc': entry.value,
-                              },
-                            )
-                            .toList();
-                        return _buildLessonList(linkItems);
+                        return _buildLessonList(lessonsData);
                       },
                       loading: () => ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -190,7 +166,7 @@ class _LearningScreenState extends ConsumerState<LearningScreen> {
     );
   }
 
-  Widget _buildLessonList(List<Map<String, dynamic>> lessons) {
+  Widget _buildLessonList(List<dynamic> lessons) {
     return ListView.builder(
       padding: const EdgeInsets.all(24),
       itemCount: lessons.length,

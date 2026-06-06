@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../presentation/statistic/models/conversation_statistic.dart';
+import '../models/recommended_lesson.dart';
 import '../services/api_service.dart';
 
 final statisticRepositoryProvider = Provider<StatisticRepository>((ref) {
@@ -66,7 +67,7 @@ class StatisticRepository {
     }
   }
 
-  Future<List<String>> fetchRecommendedLessons(DateTime date) async {
+  Future<List<RecommendedLesson>> fetchRecommendedLessons(DateTime date) async {
     try {
       final dateStr =
           '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -82,19 +83,35 @@ class StatisticRepository {
       print('API Response data: ${response.data}');
 
       final body = response.data;
-      List<String> links = [];
+      List<RecommendedLesson> lessons = [];
 
-      if (body is Map) {
+      if (body is List) {
+        lessons = body
+            .map((item) => RecommendedLesson.fromJson(item))
+            .toList(growable: false);
+      } else if (body is Map) {
         final dataField = body['data'];
-        if (dataField is Map && dataField['links'] is List) {
-          links = List<String>.from(dataField['links'] as List);
+        final dynamic videosField = dataField is Map
+            ? dataField['videos'] ?? dataField['links']
+            : dataField;
+
+        if (videosField is List) {
+          lessons = videosField
+              .map((item) => RecommendedLesson.fromJson(item))
+              .toList(growable: false);
+        } else if (body['videos'] is List) {
+          lessons = (body['videos'] as List)
+              .map((item) => RecommendedLesson.fromJson(item))
+              .toList(growable: false);
         } else if (body['links'] is List) {
-          links = List<String>.from(body['links'] as List);
+          lessons = (body['links'] as List)
+              .map((item) => RecommendedLesson.fromJson(item))
+              .toList(growable: false);
         }
       }
 
       if (response.statusCode == 200) {
-        return links;
+        return lessons;
       }
 
       return [];
