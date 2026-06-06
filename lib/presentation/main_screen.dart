@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'community/community_screen.dart';
 import 'statistic/statistic_screen.dart';
 import 'learning/learning_screen.dart';
+import 'arena/arena_screen.dart';
 import 'profile/profile_screen.dart';
 import '../core/constants/colors.dart';
 
@@ -20,6 +21,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = const [
     StatisticScreen(),
     LearningScreen(),
+    ArenaScreen(),
     CommunityScreen(),
     ProfileScreen(),
   ];
@@ -94,6 +96,11 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.book_outlined),
             activeIcon: Icon(Icons.book),
             label: 'Bài học',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.sports_esports),
+            activeIcon: Icon(Icons.sports_esports),
+            label: 'Đấu trường',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.forum_outlined),
