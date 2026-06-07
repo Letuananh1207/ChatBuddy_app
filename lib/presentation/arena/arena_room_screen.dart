@@ -3,23 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/colors.dart';
 import '../../data/models/arena_models.dart';
-import '../../data/repositories/arena_repository.dart';
-import '../../data/services/api_service.dart';
+import '../../state/arena_notifier.dart';
 import '../../state/auth_notifier.dart';
 import 'arena_start_match_screen.dart';
 
 class ArenaRoomScreen extends ConsumerStatefulWidget {
-  final String roomName;
   final String roomCode;
   final bool isHost;
-  final ArenaRoom? initialRoom;
 
   const ArenaRoomScreen({
     super.key,
-    required this.roomName,
     required this.roomCode,
     this.isHost = false,
-    this.initialRoom,
   });
 
   @override
@@ -27,89 +22,45 @@ class ArenaRoomScreen extends ConsumerStatefulWidget {
 }
 
 class _ArenaRoomScreenState extends ConsumerState<ArenaRoomScreen> {
-  ArenaRoom? _room;
-  bool _isLoading = false;
-  bool _isLeaving = false;
-
   @override
   void initState() {
     super.initState();
-    _room = widget.initialRoom;
-    _fetchRoom();
-  }
-
-  void _ensureAuthToken() {
-    final authState = ref.read(authProvider);
-    final apiService = ref.read(apiServiceProvider);
-    if (authState.token != null && authState.token!.isNotEmpty) {
-      apiService.setAuthToken(authState.token);
-    }
-  }
-
-  Future<void> _fetchRoom() async {
-    setState(() => _isLoading = true);
-    _ensureAuthToken();
-    final room =
-        await ref.read(arenaRepositoryProvider).getRoom(widget.roomCode);
-    if (!mounted) return;
-    setState(() {
-      _room = room ?? _room;
-      _isLoading = false;
+    // Fetch room data khi screen init
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(arenaNotifierProvider(null).notifier).fetchRoom(widget.roomCode);
     });
   }
 
   Future<void> _updateReady(bool ready) async {
-    if (_room == null) return;
+    final notifier = ref.read(arenaNotifierProvider(null).notifier);
+    await notifier.setReady(widget.roomCode, ready);
 
-    setState(() => _isLoading = true);
-    _ensureAuthToken();
-    final updatedRoom = await ref.read(arenaRepositoryProvider).setReady(
-          widget.roomCode,
-          ready,
-        );
     if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (updatedRoom == null) {
+    final state = ref.read(arenaNotifierProvider(null));
+    if (state.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Không thể cập nhật trạng thái sẵn sàng. Thử lại sau.'),
-        ),
+        SnackBar(content: Text(state.errorMessage!)),
       );
       return;
     }
 
-    setState(() {
-      _room = updatedRoom;
-    });
-
-    if (updatedRoom.status == 'running') {
-      _openMatch(updatedRoom);
+    if (state.room?.status == 'running') {
+      _openMatch(state.room!);
     }
   }
 
   Future<void> _leaveRoom() async {
-    if (_isLeaving) return;
-    setState(() => _isLeaving = true);
-    _ensureAuthToken();
-    final success =
-        await ref.read(arenaRepositoryProvider).leaveRoom(widget.roomCode);
-    setState(() => _isLeaving = false);
+    final notifier = ref.read(arenaNotifierProvider(null).notifier);
+    await notifier.leaveRoom(widget.roomCode);
     if (!mounted) return;
-    if (success) {
-      Navigator.of(context).pop();
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Không thể rời phòng. Thử lại sau.')),
-    );
+    Navigator.of(context).pop();
   }
 
   void _openMatch(ArenaRoom room) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ArenaStartMatchScreen(
-          room: room,
+          roomCode: room.code,
         ),
       ),
     );
@@ -117,13 +68,15 @@ class _ArenaRoomScreenState extends ConsumerState<ArenaRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final arenaState = ref.watch(arenaNotifierProvider(null));
     final authState = ref.watch(authProvider);
     final currentUserId = authState.user?.id ?? '';
-    final room = _room;
+    final room = arenaState.room;
     final participant = room?.participantForUser(currentUserId);
     final isReady = participant?.ready ?? false;
     final isRunning = room?.status == 'running';
     final isFinished = room?.status == 'finished';
+    final isLoading = arenaState.isLoading;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -132,7 +85,7 @@ class _ArenaRoomScreenState extends ConsumerState<ArenaRoomScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.indigo),
         title: Text(
-          'Phòng: ${widget.roomName}',
+          'Phòng: ${widget.roomCode}',
           style: const TextStyle(
             color: AppColors.darkText,
             fontWeight: FontWeight.bold,
@@ -167,7 +120,7 @@ class _ArenaRoomScreenState extends ConsumerState<ArenaRoomScreen> {
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     const SizedBox(height: 12),
-                    if (_isLoading && room == null)
+                    if (isLoading && room == null)
                       const Center(child: CircularProgressIndicator())
                     else if (room == null)
                       const Text('Không tải được thông tin phòng.')
@@ -269,7 +222,7 @@ class _ArenaRoomScreenState extends ConsumerState<ArenaRoomScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            if (_isLoading)
+            if (isLoading)
               const Center(child: CircularProgressIndicator())
             else
               ElevatedButton(
