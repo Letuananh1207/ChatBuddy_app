@@ -62,6 +62,7 @@ class _StatisticScreenState extends ConsumerState<StatisticScreen> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
+                // ignore: unused_result
                 ref.refresh(reviewMessagesProvider);
               },
               child: reviewMessagesAsync.when(

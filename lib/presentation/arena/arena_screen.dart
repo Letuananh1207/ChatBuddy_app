@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/colors.dart';
-import 'arena_room_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ArenaScreen extends StatefulWidget {
+import '../../core/constants/colors.dart';
+import '../../data/models/arena_models.dart';
+import '../../data/repositories/arena_repository.dart';
+import '../../data/services/api_service.dart';
+import '../../state/auth_notifier.dart';
+import '../arena/arena_room_screen.dart';
+
+class ArenaScreen extends ConsumerStatefulWidget {
   const ArenaScreen({super.key});
 
   @override
-  State<ArenaScreen> createState() => _ArenaScreenState();
+  ConsumerState<ArenaScreen> createState() => _ArenaScreenState();
 }
 
-class _ArenaScreenState extends State<ArenaScreen> {
+class _ArenaScreenState extends ConsumerState<ArenaScreen> {
   final TextEditingController _createController = TextEditingController();
   final TextEditingController _joinController = TextEditingController();
 
-  // 🔹 Lưu lịch sử tham gia phòng
   final List<Map<String, String>> _history = [];
+  bool _isProcessing = false;
 
   @override
   void dispose() {
@@ -23,12 +29,22 @@ class _ArenaScreenState extends State<ArenaScreen> {
     super.dispose();
   }
 
-  String _generateRoomCode() {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    return List.generate(
-        6,
-        (index) => letters[(DateTime.now().millisecondsSinceEpoch + index) %
-            letters.length]).join();
+  void _ensureAuthToken() {
+    final authState = ref.read(authProvider);
+    final apiService = ref.read(apiServiceProvider);
+    if (authState.token != null && authState.token!.isNotEmpty) {
+      apiService.setAuthToken(authState.token);
+    }
+  }
+
+  Future<ArenaRoom?> _createRoom() async {
+    _ensureAuthToken();
+    return await ref.read(arenaRepositoryProvider).createRoom();
+  }
+
+  Future<ArenaRoom?> _joinRoom(String code) async {
+    _ensureAuthToken();
+    return await ref.read(arenaRepositoryProvider).joinRoom(code);
   }
 
   void _showCreateDialog() {
@@ -53,33 +69,55 @@ class _ArenaScreenState extends State<ArenaScreen> {
             child: const Text('Hủy'),
           ),
           ElevatedButton(
-            onPressed: () {
-              final name = _createController.text.trim();
-              if (name.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Vui lòng nhập tên phòng')),
-                );
-                return;
-              }
-              final code = _generateRoomCode();
-              _createController.clear();
-              Navigator.of(context).pop();
+            onPressed: _isProcessing
+                ? null
+                : () async {
+                    final name = _createController.text.trim();
+                    if (name.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Vui lòng nhập tên phòng')),
+                      );
+                      return;
+                    }
 
-              // 🔹 Thêm vào lịch sử
-              setState(() {
-                _history.insert(0, {"name": name, "code": code});
-              });
+                    _createController.clear();
+                    Navigator.of(context).pop();
+                    setState(() => _isProcessing = true);
 
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => ArenaRoomScreen(
-                    roomName: name,
-                    roomCode: code,
-                    isHost: true,
-                  ),
-                ),
-              );
-            },
+                    final room = await _createRoom();
+                    if (!context.mounted) return;
+                    setState(() => _isProcessing = false);
+
+                    if (room == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Không thể tạo phòng. Kiểm tra kết nối và đăng nhập.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+
+                    setState(() {
+                      _history.insert(0, {
+                        'name': name,
+                        'code': room.code,
+                      });
+                    });
+
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => ArenaRoomScreen(
+                          roomName: name,
+                          roomCode: room.code,
+                          isHost: true,
+                          initialRoom: room,
+                        ),
+                      ),
+                    );
+                  },
             child: const Text('Tạo'),
           ),
         ],
@@ -94,8 +132,7 @@ class _ArenaScreenState extends State<ArenaScreen> {
         title: const Text('Tham gia phòng'),
         content: TextField(
           controller: _joinController,
-          decoration:
-              const InputDecoration(hintText: 'Mã phòng hoặc tên phòng'),
+          decoration: const InputDecoration(hintText: 'Mã phòng'),
         ),
         actions: [
           TextButton(
@@ -106,32 +143,54 @@ class _ArenaScreenState extends State<ArenaScreen> {
             child: const Text('Hủy'),
           ),
           ElevatedButton(
-            onPressed: () {
-              final code = _joinController.text.trim();
-              if (code.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Vui lòng nhập mã phòng')),
-                );
-                return;
-              }
-              _joinController.clear();
-              Navigator.of(context).pop();
+            onPressed: _isProcessing
+                ? null
+                : () async {
+                    final code = _joinController.text.trim();
+                    if (code.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Vui lòng nhập mã phòng')),
+                      );
+                      return;
+                    }
 
-              // 🔹 Thêm vào lịch sử
-              setState(() {
-                _history.insert(0, {"name": code, "code": code});
-              });
+                    _joinController.clear();
+                    Navigator.of(context).pop();
+                    setState(() => _isProcessing = true);
 
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => ArenaRoomScreen(
-                    roomName: code,
-                    roomCode: code,
-                    isHost: false,
-                  ),
-                ),
-              );
-            },
+                    final room = await _joinRoom(code);
+                    if (!context.mounted) return;
+                    setState(() => _isProcessing = false);
+
+                    if (room == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Không thể tham gia phòng. Kiểm tra mã phòng và kết nối.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+
+                    setState(() {
+                      _history.insert(0, {
+                        'name': code,
+                        'code': code,
+                      });
+                    });
+
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => ArenaRoomScreen(
+                          roomName: code,
+                          roomCode: room.code,
+                          isHost: false,
+                          initialRoom: room,
+                        ),
+                      ),
+                    );
+                  },
             child: const Text('Tham gia'),
           ),
         ],
@@ -148,9 +207,9 @@ class _ArenaScreenState extends State<ArenaScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
+            const Text(
               'WORD ARENA',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: AppColors.indigo,
@@ -192,8 +251,6 @@ class _ArenaScreenState extends State<ArenaScreen> {
               ],
             ),
             const SizedBox(height: 24),
-
-            // 🔹 Lịch sử tham gia
             if (_history.isNotEmpty) ...[
               const Text(
                 'Lịch sử tham gia',
@@ -212,8 +269,8 @@ class _ArenaScreenState extends State<ArenaScreen> {
                     return Card(
                       child: ListTile(
                         leading: const Icon(Icons.history),
-                        title: Text(item["name"] ?? ""),
-                        subtitle: Text("Mã phòng: ${item["code"]}"),
+                        title: Text(item['name'] ?? ''),
+                        subtitle: Text('Mã phòng: ${item['code'] ?? ''}'),
                       ),
                     );
                   },

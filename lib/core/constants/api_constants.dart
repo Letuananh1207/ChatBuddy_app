@@ -43,5 +43,7 @@ class ApiConstants {
 
   static const String register = '$apiPrefix/auth/register';
   static const String login = '$apiPrefix/auth/login';
+  static const String arenaRooms = '$apiPrefix/arena/rooms';
+  static const String posts = '$apiPrefix/posts';
   static const String health = '/health';
 }
