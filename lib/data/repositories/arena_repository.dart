@@ -61,18 +61,25 @@ class ArenaRepository {
 
   Future<ArenaRoom?> sendAnswer(
     String code, {
-    required int questionIndex,
-    required String answer,
-    required int duration,
+    int? questionIndex,
+    String? answer,
+    int? duration,
+    int? score,
   }) async {
     try {
+      final data = <String, dynamic>{};
+      if (score != null) {
+        data['score'] = score;
+        data['duration'] = duration ?? 0;
+      } else if (questionIndex != null && answer != null) {
+        data['questionIndex'] = questionIndex;
+        data['answer'] = answer;
+        data['duration'] = duration ?? 0;
+      }
+
       final response = await _apiService.post(
         '${ApiConstants.arenaRooms}/$code/answer',
-        data: {
-          'questionIndex': questionIndex,
-          'answer': answer,
-          'duration': duration,
-        },
+        data: data,
       );
       return _parseRoom(response, successStatusCodes: const [200]);
     } on DioException {

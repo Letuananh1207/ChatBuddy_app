@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/colors.dart';
+import 'arena_ranking_screen.dart';
 import '../../state/arena_notifier.dart';
 
 class ArenaStartMatchScreen extends ConsumerStatefulWidget {
@@ -22,13 +23,15 @@ class ArenaStartMatchScreen extends ConsumerStatefulWidget {
 class _ArenaStartMatchScreenState extends ConsumerState<ArenaStartMatchScreen> {
   int _currentQuestionIndex = 0;
   int? _selectedAnswerIndex;
+  int _correctCount = 0;
+  bool _awaitingFinish = false;
   Timer? _timer;
-  DateTime? _questionStartTime;
+  DateTime? _matchStartTime;
 
   @override
   void initState() {
     super.initState();
-    _questionStartTime = DateTime.now();
+    _matchStartTime = DateTime.now();
   }
 
   @override
@@ -63,18 +66,24 @@ class _ArenaStartMatchScreenState extends ConsumerState<ArenaStartMatchScreen> {
     }
 
     final currentQuestion = room.questions[_currentQuestionIndex];
-    final answer = currentQuestion.options[_selectedAnswerIndex!];
-    final duration = _questionStartTime != null
-        ? DateTime.now().difference(_questionStartTime!).inSeconds
-        : 0;
+    final selectedAnswer = currentQuestion.options[_selectedAnswerIndex!];
+    if (selectedAnswer == currentQuestion.correctAnswer) {
+      _correctCount += 1;
+    }
 
+    final isLastQuestion = _currentQuestionIndex + 1 >= room.questions.length;
     final notifier = ref.read(arenaNotifierProvider(null).notifier);
-    await notifier.sendAnswer(
-      widget.roomCode,
-      _currentQuestionIndex,
-      answer,
-      duration,
-    );
+
+    if (isLastQuestion) {
+      final duration = _matchStartTime != null
+          ? DateTime.now().difference(_matchStartTime!).inSeconds
+          : 0;
+      await notifier.sendAnswer(
+        widget.roomCode,
+        score: _correctCount,
+        duration: duration,
+      );
+    }
 
     if (!mounted) return;
 
@@ -88,13 +97,30 @@ class _ArenaStartMatchScreenState extends ConsumerState<ArenaStartMatchScreen> {
 
     setState(() {
       _selectedAnswerIndex = null;
-      _questionStartTime = DateTime.now();
+      if (isLastQuestion) {
+        _awaitingFinish = true;
+      }
     });
 
     if (_currentQuestionIndex + 1 < room.questions.length) {
       setState(() {
         _currentQuestionIndex += 1;
       });
+      return;
+    }
+
+    if (isLastQuestion) {
+      if (updatedState.room?.status == 'finished') {
+        _navigateToDashboard();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Đã gửi kết quả. Vui lòng chờ trạng thái trận đấu chuyển sang FINISHED.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
       return;
     }
 
@@ -105,13 +131,31 @@ class _ArenaStartMatchScreenState extends ConsumerState<ArenaStartMatchScreen> {
     Navigator.of(context).pop();
   }
 
+  void _navigateToDashboard() {
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => ArenaRankingScreen(roomCode: widget.roomCode),
+      ),
+      (route) => route.isFirst,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen(arenaNotifierProvider(null), (previous, next) {
+      if (_awaitingFinish && next.room?.status == 'finished') {
+        _navigateToDashboard();
+      }
+    });
+
     final arenaState = ref.watch(arenaNotifierProvider(null));
     final room = arenaState.room;
     final hasQuestions = room != null && room.questions.isNotEmpty;
     final currentQuestion =
         hasQuestions ? room.questions[_currentQuestionIndex] : null;
+    final isLastQuestion =
+        hasQuestions && _currentQuestionIndex + 1 >= room.questions.length;
     final isSubmitting = arenaState.isSubmitting;
 
     return Scaffold(
@@ -166,56 +210,78 @@ class _ArenaStartMatchScreenState extends ConsumerState<ArenaStartMatchScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                currentQuestion?.text ?? '',
+                (currentQuestion?.text.isNotEmpty ?? false)
+                    ? currentQuestion!.text
+                    : 'Không có nội dung câu hỏi.',
                 style: const TextStyle(fontSize: 15, color: Colors.black87),
               ),
               const SizedBox(height: 24),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: currentQuestion?.options.length ?? 0,
-                  itemBuilder: (context, index) {
-                    final isSelected = _selectedAnswerIndex == index;
-                    final answerText = currentQuestion?.options[index] ?? '';
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              isSelected ? AppColors.indigo : Colors.white,
-                          foregroundColor:
-                              isSelected ? Colors.white : AppColors.darkText,
-                          side: BorderSide(
-                            color: isSelected
-                                ? AppColors.indigo
-                                : Colors.grey.shade300,
+              if (currentQuestion?.options.isEmpty ?? true)
+                const Text(
+                  'Không có đáp án cho câu hỏi này.',
+                  style: TextStyle(fontSize: 14, color: Colors.black54),
+                )
+              else
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: currentQuestion?.options.length ?? 0,
+                    itemBuilder: (context, index) {
+                      final isSelected = _selectedAnswerIndex == index;
+                      final answerText = currentQuestion?.options[index] ?? '';
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                isSelected ? AppColors.indigo : Colors.white,
+                            foregroundColor:
+                                isSelected ? Colors.white : AppColors.darkText,
+                            side: BorderSide(
+                              color: isSelected
+                                  ? AppColors.indigo
+                                  : Colors.grey.shade300,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          onPressed: () => _selectAnswer(index),
+                          child: Text(
+                            answerText,
+                            style: const TextStyle(fontSize: 14),
                           ),
                         ),
-                        onPressed: () => _selectAnswer(index),
-                        child: Text(
-                          answerText,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
             ] else ...[
               const Center(
                 child: CircularProgressIndicator(),
               ),
             ],
             const SizedBox(height: 12),
+            if (_awaitingFinish)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12.0),
+                child: Text(
+                  'Đã gửi kết quả. Đang chờ trận đấu kết thúc...',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.indigo, fontSize: 14),
+                ),
+              ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.indigo,
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              onPressed: hasQuestions && !isSubmitting ? _submitAnswer : null,
+              onPressed: !_awaitingFinish &&
+                      hasQuestions &&
+                      _selectedAnswerIndex != null &&
+                      !isSubmitting
+                  ? _submitAnswer
+                  : null,
               child: isSubmitting
                   ? const SizedBox(
                       height: 20,
@@ -225,9 +291,9 @@ class _ArenaStartMatchScreenState extends ConsumerState<ArenaStartMatchScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text(
-                      'Tiếp tục',
-                      style: TextStyle(color: Colors.white, fontSize: 15),
+                  : Text(
+                      isLastQuestion ? 'Hoàn thành' : 'Tiếp tục',
+                      style: const TextStyle(color: Colors.white, fontSize: 15),
                     ),
             ),
           ],

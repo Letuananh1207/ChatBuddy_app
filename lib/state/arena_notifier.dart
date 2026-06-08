@@ -103,11 +103,12 @@ class ArenaNotifier extends StateNotifier<ArenaState> {
   }
 
   Future<void> sendAnswer(
-    String code,
-    int questionIndex,
-    String answer,
-    int duration,
-  ) async {
+    String code, {
+    int? questionIndex,
+    String? answer,
+    int? duration,
+    int? score,
+  }) async {
     state = state.copyWith(isSubmitting: true, errorMessage: null);
     _ensureAuthToken();
 
@@ -116,6 +117,7 @@ class ArenaNotifier extends StateNotifier<ArenaState> {
       questionIndex: questionIndex,
       answer: answer,
       duration: duration,
+      score: score,
     );
 
     if (updatedRoom != null) {

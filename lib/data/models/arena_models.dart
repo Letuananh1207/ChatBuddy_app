@@ -1,3 +1,5 @@
+import 'dart:math';
+
 class ArenaRoom {
   final String id;
   final String code;
@@ -38,13 +40,21 @@ class ArenaRoom {
     final rawQuestions = json['questions'];
     final questions = <ArenaQuestion>[];
     if (rawQuestions is List) {
-      for (var i = 0; i < rawQuestions.length; i++) {
-        final item = rawQuestions[i];
-        if (item is Map<String, dynamic>) {
-          questions.add(ArenaQuestion.fromJson(item, i));
-        } else if (item is Map) {
-          questions
-              .add(ArenaQuestion.fromJson(Map<String, dynamic>.from(item), i));
+      final parsedQuestions = rawQuestions
+          .where((item) => item is Map)
+          .map<Map<String, dynamic>>((item) {
+        if (item is Map<String, dynamic>) return item;
+        return Map<String, dynamic>.from(item as Map);
+      }).toList();
+
+      if (_containsVocabQuestions(parsedQuestions)) {
+        final roomCode = json['code']?.toString() ?? '';
+        questions.addAll(
+          _buildQuizQuestionsFromVocab(parsedQuestions, roomCode: roomCode),
+        );
+      } else {
+        for (var i = 0; i < parsedQuestions.length; i++) {
+          questions.add(ArenaQuestion.fromJson(parsedQuestions[i], i));
         }
       }
     }
@@ -73,6 +83,49 @@ class ArenaRoom {
     return null;
   }
 
+  static final Random _random = Random();
+
+  static bool _containsVocabQuestions(List<Map<String, dynamic>> rawQuestions) {
+    return rawQuestions.every((question) =>
+        question.containsKey('word') && question.containsKey('meaning'));
+  }
+
+  static List<ArenaQuestion> _buildQuizQuestionsFromVocab(
+      List<Map<String, dynamic>> rawQuestions,
+      {required String roomCode}) {
+    final vocabItems = rawQuestions
+        .map(ArenaVocabItem.fromJson)
+        .where((item) => item.word.isNotEmpty && item.meaning.isNotEmpty)
+        .toList();
+
+    if (vocabItems.isEmpty) {
+      return [];
+    }
+
+    final allWords = vocabItems.map((item) => item.word).toList();
+    final selectedItems = vocabItems.length > 10
+        ? vocabItems.sublist(0, 10)
+        : List<ArenaVocabItem>.from(vocabItems);
+
+    return List<ArenaQuestion>.generate(selectedItems.length, (index) {
+      final item = selectedItems[index];
+      final seededRandom =
+          Random(roomCode.hashCode ^ item.word.hashCode ^ index);
+      final wrongWords = allWords.where((word) => word != item.word).toList();
+      wrongWords.shuffle(seededRandom);
+      final options = <String>[item.word];
+      options.addAll(wrongWords.take(3));
+      options.shuffle(seededRandom);
+
+      return ArenaQuestion(
+        index: index,
+        text: item.meaning,
+        options: options,
+        raw: item.raw,
+      );
+    });
+  }
+
   ArenaParticipant? participantForUser(String userId) {
     for (final participant in participants) {
       if (participant.user.id == userId) {
@@ -83,6 +136,33 @@ class ArenaRoom {
   }
 
   bool get hasQuestions => questions.isNotEmpty;
+}
+
+class ArenaVocabItem {
+  final String word;
+  final String meaning;
+  final bool isFallback;
+  final Map<String, dynamic> raw;
+
+  ArenaVocabItem({
+    required this.word,
+    required this.meaning,
+    required this.isFallback,
+    required this.raw,
+  });
+
+  factory ArenaVocabItem.fromJson(Map<String, dynamic> json) {
+    final word = json['word']?.toString() ?? '';
+    final meaning = json['meaning']?.toString() ?? '';
+    final isFallback = json['isFallback'] == true;
+
+    return ArenaVocabItem(
+      word: word,
+      meaning: meaning,
+      isFallback: isFallback,
+      raw: Map<String, dynamic>.from(json),
+    );
+  }
 }
 
 class ArenaParticipant {
@@ -183,18 +263,35 @@ class ArenaQuestion {
     required this.raw,
   });
 
+  String get correctAnswer {
+    return raw['word']?.toString() ??
+        raw['answer']?.toString() ??
+        raw['correctAnswer']?.toString() ??
+        '';
+  }
+
   factory ArenaQuestion.fromJson(Map<String, dynamic> json, int index) {
     final text = json['text']?.toString() ??
         json['question']?.toString() ??
         json['content']?.toString() ??
         json['title']?.toString() ??
+        json['prompt']?.toString() ??
+        json['questionText']?.toString() ??
         'Câu hỏi ${index + 1}';
 
-    final rawOptions = json['options'] ?? json['choices'] ?? json['answers'];
+    final rawOptions = json['options'] ??
+        json['choices'] ??
+        json['answers'] ??
+        json['choicesList'];
     final options = <String>[];
+
     if (rawOptions is List) {
       for (final option in rawOptions) {
-        options.add(option?.toString() ?? '');
+        options.add(_parseOptionText(option));
+      }
+    } else if (rawOptions is Map) {
+      for (final value in rawOptions.values) {
+        options.add(_parseOptionText(value));
       }
     }
 
@@ -204,6 +301,29 @@ class ArenaQuestion {
       options: options.where((element) => element.isNotEmpty).toList(),
       raw: Map<String, dynamic>.from(json),
     );
+  }
+
+  static String _parseOptionText(dynamic option) {
+    if (option == null) return '';
+    if (option is String) return option;
+    if (option is num) return option.toString();
+    if (option is Map<String, dynamic>) {
+      return option['text']?.toString() ??
+          option['label']?.toString() ??
+          option['answer']?.toString() ??
+          option['content']?.toString() ??
+          option['value']?.toString() ??
+          '';
+    }
+    if (option is Map) {
+      return option['text']?.toString() ??
+          option['label']?.toString() ??
+          option['answer']?.toString() ??
+          option['content']?.toString() ??
+          option['value']?.toString() ??
+          '';
+    }
+    return option.toString();
   }
 }
 
