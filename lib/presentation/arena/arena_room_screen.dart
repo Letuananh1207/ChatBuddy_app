@@ -77,6 +77,8 @@ class _ArenaRoomScreenState extends ConsumerState<ArenaRoomScreen> {
     final isRunning = room?.status == 'running';
     final isFinished = room?.status == 'finished';
     final isLoading = arenaState.isLoading;
+    final participantCount = room?.participants.length ?? 0;
+    final canToggleReady = participantCount >= 2 || isReady;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -222,6 +224,22 @@ class _ArenaRoomScreenState extends ConsumerState<ArenaRoomScreen> {
               ),
             ),
             const SizedBox(height: 20),
+            if (participantCount < 2 && !isRunning)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: const [
+                  Text(
+                    'Cần ít nhất 2 người để bắt đầu trận đấu.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.indigo,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 12),
+                ],
+              ),
             if (isLoading)
               const Center(child: CircularProgressIndicator())
             else
@@ -230,7 +248,9 @@ class _ArenaRoomScreenState extends ConsumerState<ArenaRoomScreen> {
                   backgroundColor: AppColors.indigo,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                onPressed: room == null || isFinished
+                onPressed: room == null ||
+                        isFinished ||
+                        (!canToggleReady && !isRunning)
                     ? null
                     : () {
                         if (isRunning) {

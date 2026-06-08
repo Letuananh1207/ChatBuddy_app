@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import 'community/community_screen.dart';
 import 'statistic/statistic_screen.dart';
 import 'learning/learning_screen.dart';
@@ -23,7 +25,6 @@ class _MainScreenState extends State<MainScreen> {
     LearningScreen(),
     ArenaScreen(),
     CommunityScreen(),
-    ProfileScreen(),
   ];
 
   @override
@@ -42,8 +43,8 @@ class _MainScreenState extends State<MainScreen> {
                 'assets/logo_test.webp',
                 width: 32,
                 height: 32,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.chat_bubble_outline,
+                errorBuilder: (context, error, stackTrace) => const FaIcon(
+                  FontAwesomeIcons.commentDots,
                   color: AppColors.indigo,
                   size: 32,
                 ),
@@ -61,16 +62,15 @@ class _MainScreenState extends State<MainScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Thông báo',
-            icon: Icon(
-              Icons.notifications_outlined,
+            tooltip: 'Tài khoản',
+            icon: FaIcon(
+              FontAwesomeIcons.userGear,
               color: Colors.grey.shade700,
             ),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Chưa có thông báo mới'),
-                  behavior: SnackBarBehavior.floating,
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ProfileScreen(),
                 ),
               );
             },
@@ -88,29 +88,24 @@ class _MainScreenState extends State<MainScreen> {
         unselectedFontSize: 11,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
+            icon: FaIcon(FontAwesomeIcons.house),
+            activeIcon: FaIcon(FontAwesomeIcons.houseChimney),
             label: 'Trang chủ',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.book_outlined),
-            activeIcon: Icon(Icons.book),
+            icon: FaIcon(FontAwesomeIcons.book),
+            activeIcon: FaIcon(FontAwesomeIcons.bookOpen),
             label: 'Bài học',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.sports_esports),
-            activeIcon: Icon(Icons.sports_esports),
+            icon: FaIcon(FontAwesomeIcons.shieldHalved),
+            activeIcon: FaIcon(FontAwesomeIcons.shield),
             label: 'Đấu trường',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.forum_outlined),
-            activeIcon: Icon(Icons.forum),
+            icon: FaIcon(FontAwesomeIcons.comments),
+            activeIcon: FaIcon(FontAwesomeIcons.comments),
             label: 'Cộng đồng',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Tài khoản',
           ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/colors.dart';
 import '../../state/arena_notifier.dart';
+import '../../data/services/arena_history_service.dart';
 import '../arena/arena_room_screen.dart';
 
 class ArenaScreen extends ConsumerStatefulWidget {
@@ -15,6 +16,20 @@ class ArenaScreen extends ConsumerStatefulWidget {
 class _ArenaScreenState extends ConsumerState<ArenaScreen> {
   final TextEditingController _joinController = TextEditingController();
   final List<Map<String, String>> _history = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    final history = await ArenaHistoryService.getHistory();
+    setState(() {
+      _history.clear();
+      _history.addAll(history);
+    });
+  }
 
   @override
   void dispose() {
@@ -54,8 +69,12 @@ class _ArenaScreenState extends ConsumerState<ArenaScreen> {
               }
 
               if (state.room != null) {
-                _history.insert(0, {
+                final newItem = {
                   'code': state.room!.code,
+                };
+                await ArenaHistoryService.addToHistory(newItem);
+                setState(() {
+                  _history.insert(0, newItem);
                 });
 
                 Navigator.of(context).push(
@@ -121,8 +140,12 @@ class _ArenaScreenState extends ConsumerState<ArenaScreen> {
               }
 
               if (state.room != null) {
-                _history.insert(0, {
+                final newItem = {
                   'code': state.room!.code,
+                };
+                await ArenaHistoryService.addToHistory(newItem);
+                setState(() {
+                  _history.insert(0, newItem);
                 });
 
                 Navigator.of(context).push(

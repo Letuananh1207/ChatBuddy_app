@@ -129,4 +129,33 @@ class CommunityRepository {
 
     throw Exception('Không thể tải chi tiết bài viết');
   }
+
+  Future<CommunityPost> toggleLike(String postId) async {
+    final response =
+        await _apiService.post('${ApiConstants.posts}/$postId/like');
+
+    if ((response.statusCode == 200 || response.statusCode == 201) &&
+        response.data is Map<String, dynamic>) {
+      return CommunityPost.fromJson(response.data as Map<String, dynamic>);
+    }
+
+    throw Exception('Không thể thay đổi trạng thái thích bài viết');
+  }
+
+  Future<CommunityPost> addComment({
+    required String postId,
+    required String content,
+  }) async {
+    final response = await _apiService.post(
+      '${ApiConstants.posts}/$postId/comment',
+      data: {'content': content},
+    );
+
+    if ((response.statusCode == 200 || response.statusCode == 201) &&
+        response.data is Map<String, dynamic>) {
+      return CommunityPost.fromJson(response.data as Map<String, dynamic>);
+    }
+
+    throw Exception('Không thể thêm bình luận');
+  }
 }
