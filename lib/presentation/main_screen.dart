@@ -64,8 +64,9 @@ class _MainScreenState extends State<MainScreen> {
           IconButton(
             tooltip: 'Tài khoản',
             icon: FaIcon(
-              FontAwesomeIcons.userGear,
+              FontAwesomeIcons.gear,
               color: Colors.grey.shade700,
+              size: 18,
             ),
             onPressed: () {
               Navigator.of(context).push(
@@ -84,27 +85,51 @@ class _MainScreenState extends State<MainScreen> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppColors.indigo,
         unselectedItemColor: Colors.grey,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
+        selectedFontSize: 14,
+        unselectedFontSize: 13,
         items: const [
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.house),
-            activeIcon: FaIcon(FontAwesomeIcons.houseChimney),
+            icon: Padding(
+              padding: EdgeInsets.only(bottom: 4), // tăng khoảng cách
+              child: FaIcon(FontAwesomeIcons.house, size: 20),
+            ),
+            activeIcon: Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: FaIcon(FontAwesomeIcons.houseChimney, size: 20),
+            ),
             label: 'Trang chủ',
           ),
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.book),
-            activeIcon: FaIcon(FontAwesomeIcons.bookOpen),
+            icon: Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: FaIcon(FontAwesomeIcons.book, size: 20),
+            ),
+            activeIcon: Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: FaIcon(FontAwesomeIcons.bookOpen, size: 20),
+            ),
             label: 'Bài học',
           ),
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.shieldHalved),
-            activeIcon: FaIcon(FontAwesomeIcons.shield),
+            icon: Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: FaIcon(FontAwesomeIcons.shieldHalved, size: 20),
+            ),
+            activeIcon: Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: FaIcon(FontAwesomeIcons.shield, size: 20),
+            ),
             label: 'Đấu trường',
           ),
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.comments),
-            activeIcon: FaIcon(FontAwesomeIcons.comments),
+            icon: Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: FaIcon(FontAwesomeIcons.comments, size: 20),
+            ),
+            activeIcon: Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: FaIcon(FontAwesomeIcons.comments, size: 20),
+            ),
             label: 'Cộng đồng',
           ),
         ],
